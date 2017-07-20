@@ -228,8 +228,6 @@ import com.taobao.android.builder.tools.manifest.ManifestHelper;
 import com.taobao.android.builder.tools.manifest.ManifestHelper.BundleManifestProvider;
 import org.gradle.api.Action;
 import org.gradle.api.Task;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * 设置awb 的bundle依赖
@@ -238,7 +236,7 @@ import org.slf4j.LoggerFactory;
  */
 public class PreProcessManifestAction implements Action<Task> {
 
-    private static final Logger sLogger = LoggerFactory.getLogger(PreProcessManifestAction.class);
+    // private static final Logger sLogger = LoggerFactory.getLogger(PreProcessManifestAction.class);
 
     private final AppVariantContext appVariantContext;
 
@@ -267,8 +265,9 @@ public class PreProcessManifestAction implements Action<Task> {
 
             List<ManifestProvider> allManifest = new ArrayList<>();
             // 动态部署不合并AndroidManifest
-            if (appVariantContext.getBuildType().getPatchConfig() == null || !appVariantContext.getBuildType()
-                .getPatchConfig().isCreateTPatch()) {
+            if (!appVariantContext.getAtlasExtension().getTBuildConfig().isIncremental()
+                || appVariantContext.getBuildType().getPatchConfig() == null
+                || !appVariantContext.getBuildType().getPatchConfig().isCreateTPatch()) {
                 VariantScope variantScope = appVariantContext.getScope();
                 GradleVariantConfiguration config = variantScope.getVariantConfiguration();
                 AtlasDependencyTree dependencyTree = AtlasBuildContext.androidDependencyTrees.get(config.getFullName());
@@ -281,8 +280,11 @@ public class PreProcessManifestAction implements Action<Task> {
                 allManifest.addAll(bundleProviders);
             }
 
-            // 增量编译基线AndroidManifest
-            if (appVariantContext.getAtlasExtension().getTBuildConfig().isIncremental()) {
+            // 增量编译整包基线AndroidManifest
+            if (appVariantContext.getAtlasExtension().getTBuildConfig().isIncremental()
+                && appVariantContext.getBuildType().getPatchConfig() == null || !appVariantContext.getBuildType()
+                .getPatchConfig()
+                .isCreateTPatch()) {
                 allManifest.add(new BundleManifestProvider(appVariantContext.apContext.getBaseManifest()));
             }
 
